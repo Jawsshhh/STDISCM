@@ -3,11 +3,16 @@
 AGameObject::AGameObject(String name)
 {
 	this->name = name;
+	
 }
 
 AGameObject::~AGameObject() {
-	delete this->sprite;
-	delete this->texture;
+    if (this->sprite != nullptr) {
+        delete this->sprite;
+    }
+    if (this->texture != nullptr) {
+        delete this->texture;
+    }
 }
 
 AGameObject::String AGameObject::getName() {

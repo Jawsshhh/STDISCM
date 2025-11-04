@@ -2,7 +2,7 @@
 #include <iostream>
 #include "BaseRunner.h"
 
-FPSCounter::FPSCounter(): AGameObject("FPSCounter")
+FPSCounter::FPSCounter() : AGameObject("FPSCounter")
 {
 }
 
@@ -39,11 +39,22 @@ void FPSCounter::draw(sf::RenderWindow* targetWindow)
 {
 	AGameObject::draw(targetWindow);
 
-	if(this->statsText != nullptr)
+	if (this->statsText != nullptr)
 		targetWindow->draw(*this->statsText);
 }
 
 void FPSCounter::updateFPS(sf::Time elapsedTime)
 {
-	this->statsText->setString("FPS: --\n");
+	this->updateTime += elapsedTime;
+	this->framesPassed++;
+
+	if (this->updateTime >= sf::seconds(1.0f))
+	{
+		float fps = this->framesPassed / this->updateTime.asSeconds();
+
+		this->statsText->setString("FPS: " + std::to_string((int)fps) + "\n");
+
+		this->updateTime = sf::Time::Zero;
+		this->framesPassed = 0;
+	}
 }

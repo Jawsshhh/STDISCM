@@ -22,8 +22,8 @@ class AGameObject: sf::NonCopyable
 
 	protected:
 		String name;
-		sf::Sprite* sprite;
-		sf::Texture* texture;
+		sf::Sprite* sprite = new sf::Sprite();
+		sf::Texture* texture = new sf::Texture();
 
 		float posX = 0.0f; float posY = 0.0f;
 		float scaleX = 1.0f; float scaleY = 1.0f;

@@ -5,6 +5,7 @@
 #include "TextureDisplay.h"
 #include "FPSCounter.h"
 
+const float FRAME_RATE = 60.f;
 /// <summary>
 /// This demonstrates a running parallax background where after X seconds, a batch of assets will be streamed and loaded.
 /// </summary>
