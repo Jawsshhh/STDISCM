@@ -1,61 +1,84 @@
 #include "ThreadPool.h"
 
 ThreadPool::ThreadPool(int _workerCount)
+    : workerCount(_workerCount), isRunning(false)
 {
-	workerCount = _workerCount;
+    workers.resize(workerCount);
 
-	for (int i = 0; i < workerCount; i++)
-	{
-		InactiveThreads.push(new WorkerThread(i, this));
-	}
+    // Create and start all worker threads
+    for (int i = 0; i < workerCount; i++)
+    {
+        workers[i] = new WorkerThread(i, this);
+        availableWorkerIds.push(i);
+    }
 }
 
 ThreadPool::~ThreadPool()
 {
+    StopScheduling();
+
+    for (auto worker : workers)
+    {
+        delete worker;
+    }
 }
 
 void ThreadPool::StartScheduling()
 {
-	this->isRunning = true;
-	this->start();
+    isRunning = true;
+
+    // Start all worker threads
+    for (auto worker : workers)
+    {
+        worker->Start();
+    }
 }
 
 void ThreadPool::StopScheduling()
 {
-	this->isRunning = false;
+    isRunning = false;
+
+    // Stop all worker threads
+    for (auto worker : workers)
+    {
+        worker->Stop();
+    }
 }
 
 void ThreadPool::ScheduleTask(IWorkerAction* _task)
 {
-	this->PendingTasks.push(_task);
+    {
+        std::lock_guard<std::mutex> lock(poolMutex);
+        pendingTasks.push(_task);
+    }
+
+    processPendingTasks();
 }
 
-void ThreadPool::run()
+void ThreadPool::processPendingTasks()
 {
-	while (this->isRunning) {
-		if (!this->PendingTasks.empty()) {
-			if (!this->InactiveThreads.empty()) {
-				auto workerThread = this->InactiveThreads.front();
-				this->InactiveThreads.pop();
+    std::lock_guard<std::mutex> lock(poolMutex);
 
-				this->ActiveThreads[workerThread->GetId()] = workerThread;
+    // Assign tasks to available workers
+    while (!pendingTasks.empty() && !availableWorkerIds.empty())
+    {
+        int workerId = availableWorkerIds.front();
+        availableWorkerIds.pop();
 
-				auto task = this->PendingTasks.front();
-				this->PendingTasks.pop();
-				workerThread->AssignTask(task);
+        IWorkerAction* task = pendingTasks.front();
+        pendingTasks.pop();
 
-				workerThread->start();
-			}
-		}
-	}
+        workers[workerId]->AssignTask(task);
+    }
 }
 
 void ThreadPool::OnFinishedTask(int id)
 {
-	if (this->ActiveThreads[0] != nullptr) {
-		delete this->ActiveThreads[id];
-		this->ActiveThreads.erase(id);
+    {
+        std::lock_guard<std::mutex> lock(poolMutex);
+        availableWorkerIds.push(id);
+    }
 
-		InactiveThreads.push(new WorkerThread(id, this));
-	}
+    // Try to process more pending tasks
+    processPendingTasks();
 }

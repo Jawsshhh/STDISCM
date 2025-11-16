@@ -22,10 +22,10 @@ private:
 	typedef std::vector<IconObject*> IconList;
 	IconList iconList;
 
-	ThreadPool threadPool = ThreadPool(2);
+	ThreadPool threadPool = ThreadPool(20);
 
 	enum StreamingType { BATCH_LOAD = 0, SINGLE_STREAM = 1 };
-	const float STREAMING_LOAD_DELAY = 2000.0f;
+	const float STREAMING_LOAD_DELAY = 750.0f;
 	const StreamingType streamingType = SINGLE_STREAM;
 	float ticks = 0.0f;
 	bool startedStreaming = false;

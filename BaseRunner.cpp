@@ -39,8 +39,8 @@ void BaseRunner::run() {
 			timeSinceLastUpdate -= TIME_PER_FRAME;
 
 			processEvents();
-			//update(TIME_PER_FRAME);
-			update(elapsedTime);
+			update(TIME_PER_FRAME);
+			//update(elapsedTime);
 		}
 
 		render();

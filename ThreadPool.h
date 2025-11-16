@@ -1,30 +1,32 @@
 #pragma once
 
-#include "IETThread.h"
 #include "WorkerThread.h"
 #include "IWorkerAction.h"
 
 #include <queue>
-#include <unordered_map>
+#include <vector>
+#include <mutex>
 
-class ThreadPool : public IETThread, public IFinishedTask {
+class ThreadPool : public IFinishedTask {
 public:
-	ThreadPool(int _workerCount);
-	~ThreadPool();
+    ThreadPool(int _workerCount);
+    ~ThreadPool();
 
-	void StartScheduling();
-	void StopScheduling();
+    void StartScheduling();
+    void StopScheduling();
 
-	void ScheduleTask(IWorkerAction* _task);
+    void ScheduleTask(IWorkerAction* _task);
 
 private:
-	void run() override;
-	void OnFinishedTask(int id) override;
+    void OnFinishedTask(int id) override;
 
-	bool isRunning = false;
-	int workerCount = 1;
+    int workerCount;
+    std::vector<WorkerThread*> workers;
+    std::queue<int> availableWorkerIds;
+    std::queue<IWorkerAction*> pendingTasks;
 
-	std::queue<IWorkerAction*> PendingTasks;
-	std::unordered_map<int, WorkerThread*> ActiveThreads;
-	std::queue<WorkerThread*> InactiveThreads;
+    std::mutex poolMutex;
+    bool isRunning;
+
+    void processPendingTasks();
 };
