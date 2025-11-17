@@ -1,19 +1,25 @@
 #include "IconObject.h"
-#include <iostream>
-#include "BaseRunner.h"
 #include "TextureManager.h"
+#include <iostream>
 
-IconObject::IconObject(String name, int textureIndex): AGameObject(name)
+IconObject::IconObject(String name, int textureIndex) : AGameObject(name)
 {
 	this->textureIndex = textureIndex;
 }
 
 void IconObject::initialize()
 {
-	//assign texture
-	this->sprite = new sf::Sprite();
 	sf::Texture* texture = TextureManager::getInstance()->getStreamTextureFromList(this->textureIndex);
-	this->sprite->setTexture(*texture);
+
+	if (texture != nullptr && this->sprite != nullptr)
+	{
+		this->sprite->setTexture(*texture);
+		std::cout << "IconObject loaded texture index: " << this->textureIndex << std::endl;
+	}
+	else
+	{
+		std::cout << "Failed to load texture at index: " << this->textureIndex << std::endl;
+	}
 }
 
 void IconObject::processInput(sf::Event event)

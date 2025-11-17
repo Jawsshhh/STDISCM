@@ -4,15 +4,16 @@
 
 #include <mutex>
 #include "ThreadPool.h"
+#include "AnimatedCharacter.h"
+#include "LoadingText.h"
 
 class IconObject;
-/// <summary>
-/// Class that deals with displaying of streamed textures
-/// </summary>
+
 class TextureDisplay : public AGameObject, public IExecutionEvent
 {
 public:
 	TextureDisplay();
+	~TextureDisplay();
 	void initialize();
 	void processInput(sf::Event event);
 	void update(sf::Time deltaTime);
@@ -20,22 +21,24 @@ public:
 
 private:
 	typedef std::vector<IconObject*> IconList;
-	IconList iconList;
+	IconList iconList; // Restore the icon list
 
 	ThreadPool threadPool = ThreadPool(20);
+	AnimatedCharacter* loadingCharacter = nullptr;
+	LoadingText* loadingText = nullptr;
 
-	enum StreamingType { BATCH_LOAD = 0, SINGLE_STREAM = 1 };
+	const int TOTAL_TEXTURES = 480;
 	const float STREAMING_LOAD_DELAY = 750.0f;
-	const StreamingType streamingType = SINGLE_STREAM;
 	float ticks = 0.0f;
-	bool startedStreaming = false;
 
-	int columnGrid = 0; int rowGrid = 0;
-	
+	int columnGrid = 0;
+	int rowGrid = 0;
+
 	const int MAX_COLUMN = 28;
 	const int MAX_ROW = 22;
 
-	void spawnObject();
 	std::mutex guard;
-};
 
+	void spawnObject(); // Restore spawn method
+	void updateLoadingProgress();
+};

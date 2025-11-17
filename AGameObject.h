@@ -20,6 +20,7 @@ class AGameObject: sf::NonCopyable
 		virtual sf::Vector2f getPosition();
 		virtual sf::Vector2f getScale();
 
+
 	protected:
 		String name;
 		sf::Sprite* sprite = new sf::Sprite();

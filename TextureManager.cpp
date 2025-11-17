@@ -25,12 +25,28 @@ TextureManager::TextureManager()
 void TextureManager::loadFromAssetList()
 {
 	std::cout << "[TextureManager] Reading from asset list" << std::endl;
-	std::ifstream stream("Media/assets.txt");
-	String path;
 
-	while(std::getline(stream, path))
+	// Diagnostic: print current working directory and absolute target path
+	std::cout << "[TextureManager] Current working directory: " << std::filesystem::current_path() << std::endl;
+	auto assetsPath = std::filesystem::path("Media") / "assets.txt";
+	std::cout << "[TextureManager] Attempting to open: " << std::filesystem::absolute(assetsPath) << std::endl;
+
+	std::ifstream stream(assetsPath);
+	if (!stream.is_open()) {
+		std::cerr << "[TextureManager] ERROR: Failed to open assets file: " << std::filesystem::absolute(assetsPath) << std::endl;
+		return;
+	}
+
+	String path;
+	while (std::getline(stream, path))
 	{
+		// Trim whitespace? at least log the exact line read
+		std::cout << "[TextureManager] assets.txt line: '" << path << "'" << std::endl;
+
 		std::vector<String> tokens = StringUtils::split(path, '/');
+		if (tokens.empty()) {
+			continue;
+		}
 		String assetName = StringUtils::split(tokens[tokens.size() - 1], '.')[0];
 		this->instantiateAsTexture(path, assetName, false);
 		std::cout << "[TextureManager] Loaded texture: " << assetName << std::endl;
