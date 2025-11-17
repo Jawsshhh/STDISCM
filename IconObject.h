@@ -8,8 +8,9 @@ public:
 	void initialize() override;
 	void processInput(sf::Event event) override;
 	void update(sf::Time deltaTime) override;
+	void setTransparency(int alpha);  // ADD THIS
 
-
+	
 private:
 	int textureIndex;
 };

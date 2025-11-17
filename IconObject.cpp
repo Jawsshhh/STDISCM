@@ -22,10 +22,21 @@ void IconObject::initialize()
 	}
 }
 
+
 void IconObject::processInput(sf::Event event)
 {
 }
 
 void IconObject::update(sf::Time deltaTime)
 {
+}
+
+void IconObject::setTransparency(int alpha)
+{
+	if (this->sprite != nullptr)
+	{
+		sf::Color color = this->sprite->getColor();
+		color.a = static_cast<sf::Uint8>(alpha);
+		this->sprite->setColor(color);
+	}
 }

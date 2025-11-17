@@ -4,6 +4,7 @@
 #include "BaseRunner.h"
 #include "GameObjectManager.h"
 #include "IconObject.h"
+#include "BGObject.h"
 
 TextureDisplay::TextureDisplay() : AGameObject("TextureDisplay")
 {
@@ -59,16 +60,21 @@ void TextureDisplay::update(sf::Time deltaTime)
 		int loadedTextureCount = TextureManager::getInstance()->getNumLoadedStreamTextures();
 		int numReadyToSpawn = loadedTextureCount - spawnedIconCount;
 
-		// Spawn icons in batches
+		// ADD THIS CHECK: Only spawn if we have LOADED textures ready
 		if (numReadyToSpawn > 0) {
-			const int SPAWN_BATCH_SIZE = 10;
+			const int SPAWN_BATCH_SIZE = 20;
 			int numToSpawnThisBatch = std::min(numReadyToSpawn, SPAWN_BATCH_SIZE);
 
 			std::cout << "[MainThread] === Spawning BATCH of " << numToSpawnThisBatch
 				<< " icons (out of " << numReadyToSpawn << " ready) ===" << std::endl;
 
 			for (int i = 0; i < numToSpawnThisBatch; i++) {
-				this->spawnObject();
+				// IMPORTANT: Only spawn if the texture index exists
+				int textureIndex = this->iconList.size();
+				if (textureIndex < loadedTextureCount)
+				{
+					this->spawnObject();
+				}
 			}
 		}
 
@@ -76,8 +82,8 @@ void TextureDisplay::update(sf::Time deltaTime)
 		updateLoadingProgress();
 
 		// Load textures in batches
-		const int LOAD_BATCH_SIZE = 10;
-		int totalTextures = 480;
+		const int LOAD_BATCH_SIZE = 40;
+		int totalTextures = TOTAL_TEXTURES;
 
 		if (loadedTextureCount < totalTextures)
 		{
@@ -93,6 +99,12 @@ void TextureDisplay::update(sf::Time deltaTime)
 				threadPool.ScheduleTask(asset);
 			}
 		}
+	}
+
+	// Handle icon fade-in after background transition
+	if (loadingComplete && !allIconsVisible)
+	{
+		updateIconFadeIn(deltaTime);
 	}
 }
 
@@ -113,8 +125,8 @@ void TextureDisplay::spawnObject()
 	// Set position in grid with offset
 	int IMG_WIDTH = 68;
 	int IMG_HEIGHT = 68;
-	int OFFSET_X = 0;    // Horizontal offset from left edge
-	int OFFSET_Y = -60;   // Vertical offset from top (adjust this to move down)
+	int OFFSET_X = -65;    // Horizontal offset from left edge
+	int OFFSET_Y = -100;   // Vertical offset from top (adjust this to move down)
 
 	float x = OFFSET_X + (this->columnGrid * IMG_WIDTH);
 	float y = OFFSET_Y + (this->rowGrid * IMG_HEIGHT);
@@ -130,6 +142,8 @@ void TextureDisplay::spawnObject()
 
 	GameObjectManager::getInstance()->addObject(iconObj);
 	iconObj->setPosition(x, y);
+	iconObj->setTransparency(0);  // CHANGED
+
 
 	guard.unlock();
 }
@@ -140,13 +154,64 @@ void TextureDisplay::updateLoadingProgress()
 
 	int loadedCount = TextureManager::getInstance()->getNumLoadedStreamTextures();
 	float progress = static_cast<float>(loadedCount) / static_cast<float>(TOTAL_TEXTURES);
-
 	loadingCharacter->updateProgress(progress);
 
-	// Optional: Remove character when loading is complete
-	if (loadedCount >= TOTAL_TEXTURES)
+	// Start background transition when loading is complete
+	if (loadedCount >= TOTAL_TEXTURES && !loadingComplete)
 	{
-		std::cout << "Loading complete!" << std::endl;
-		// You could hide or remove the character here
+		std::cout << "Loading complete! Starting background transition..." << std::endl;
+
+		loadingComplete = true;
+
+		// Start background transition
+		BGObject* bgObject = dynamic_cast<BGObject*>(
+			GameObjectManager::getInstance()->findObjectByName("BGObject")
+			);
+		if (bgObject != nullptr)
+		{
+			bgObject->startTransitionToBg2();
+		}
+
+		// ADD THIS: Remove loading character and loading text
+		if (loadingCharacter != nullptr)
+		{
+			GameObjectManager::getInstance()->deleteObjectByName("LoadingCharacter");
+			loadingCharacter = nullptr;
+			std::cout << "Removed loading character" << std::endl;
+		}
+
+		if (loadingText != nullptr)
+		{
+			GameObjectManager::getInstance()->deleteObjectByName("LoadingText");
+			loadingText = nullptr;
+			std::cout << "Removed loading text" << std::endl;
+		}
+	}
+}
+
+void TextureDisplay::updateIconFadeIn(sf::Time deltaTime)
+{
+	// Wait for delay after background starts transitioning
+	if (delayTimer < ICON_FADE_DELAY)
+	{
+		delayTimer += deltaTime.asSeconds();
+		return;
+	}
+
+	// Fade in icons
+	iconFadeProgress += deltaTime.asSeconds() / ICON_FADE_DURATION;
+
+	if (iconFadeProgress >= 1.0f)
+	{
+		iconFadeProgress = 1.0f;
+		allIconsVisible = true;
+		std::cout << "Icon fade-in complete!" << std::endl;
+	}
+
+	// Update all icon transparencies
+	int alpha = static_cast<int>(iconFadeProgress * 255);
+	for (auto icon : iconList)
+	{
+		icon->setTransparency(alpha);
 	}
 }

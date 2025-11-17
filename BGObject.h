@@ -1,6 +1,5 @@
 #pragma once
 #include "AGameObject.h"
-#include <vector>
 
 class BGObject : public AGameObject
 {
@@ -10,22 +9,18 @@ public:
     void processInput(sf::Event event);
     void update(sf::Time deltaTime);
     void draw(sf::RenderWindow* targetWindow) override;
+    void startTransitionToBg2();  // ADD THIS - call when loading completes
 
 private:
     const float SPEED_MULTIPLIER = 500.0f;
-    const float BACKGROUND_SWITCH_TIME = 5.0f; // Show each background for 5 seconds
-    const float FADE_DURATION = 1.5f; // Fade takes 1.5 seconds
+    const float FADE_DURATION = 2.0f; // Fade takes 2 seconds
 
-    std::vector<sf::Texture*> backgroundTextures;
-    sf::Sprite* nextSprite = nullptr; // Sprite for the next background during transition
+    sf::Texture* bg1Texture = nullptr;
+    sf::Texture* bg2Texture = nullptr;
+    sf::Sprite* bg2Sprite = nullptr;
 
-    int currentBackgroundIndex = 0;
-    int nextBackgroundIndex = 1;
-
-    float timeSinceLastSwitch = 0.0f;
-    float fadeProgress = 0.0f;
     bool isFading = false;
+    float fadeProgress = 0.0f;
 
-    void startFade();
     void updateFade(float deltaTime);
 };

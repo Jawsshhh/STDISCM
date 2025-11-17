@@ -8,22 +8,36 @@ FPSCounter::FPSCounter() : AGameObject("FPSCounter")
 
 FPSCounter::~FPSCounter()
 {
-	delete this->statsText->getFont();
-	delete this->statsText;
-	AGameObject::~AGameObject();
+	if (this->statsText != nullptr)
+	{
+		delete this->statsText;
+		this->statsText = nullptr;
+	}
+
+	if (this->font != nullptr)
+	{
+		delete this->font;
+		this->font = nullptr;
+	}
+	// DON'T call parent destructor explicitly - it's called automatically
 }
 
 void FPSCounter::initialize()
 {
-	sf::Font* font = new sf::Font();
-	font->loadFromFile("Media/Sansation.ttf");
+	this->font = new sf::Font();
+	if (!this->font->loadFromFile("Media/Sansation.ttf"))
+	{
+		std::cout << "Warning: Failed to load font for FPS counter!" << std::endl;
+		return;
+	}
 
 	this->statsText = new sf::Text();
-	this->statsText->setFont(*font);
+	this->statsText->setFont(*this->font);
 	this->statsText->setPosition(BaseRunner::WINDOW_WIDTH - 150, BaseRunner::WINDOW_HEIGHT - 70);
-	this->statsText->setOutlineColor(sf::Color(1.0f, 1.0f, 1.0f));
+	this->statsText->setOutlineColor(sf::Color::White);  // Better syntax
 	this->statsText->setOutlineThickness(2.5f);
 	this->statsText->setCharacterSize(35);
+	this->statsText->setFillColor(sf::Color::White);  // Add this to set text color
 }
 
 void FPSCounter::processInput(sf::Event event)
@@ -52,7 +66,7 @@ void FPSCounter::updateFPS(sf::Time elapsedTime)
 	{
 		float fps = this->framesPassed / this->updateTime.asSeconds();
 
-		this->statsText->setString("FPS: " + std::to_string((int)fps) + "\n");
+		this->statsText->setString("FPS: " + std::to_string((int)fps));
 
 		this->updateTime = sf::Time::Zero;
 		this->framesPassed = 0;
